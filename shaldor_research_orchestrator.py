@@ -55,6 +55,12 @@ import sec_scraper
 import maya_scraper
 import shaldor_financials
 
+# ─── HTTP Layer ──────────────────────────────────────────────────────────────
+# Replace curl subprocess calls with Python requests for cloud compatibility
+
+import shaldor_http
+shaldor_http.patch_scrapers()
+
 # ─── Thread Safety ───────────────────────────────────────────────────────────
 # SEC scraper's rate limiter uses global state — patch it to be thread-safe
 
