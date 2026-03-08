@@ -165,6 +165,7 @@ def parse_yahoo_overrides(text: str) -> dict[str, str]:
 # ─── Run Research ────────────────────────────────────────────────────────────
 
 def run_and_display():
+    import sys as _sys
     peers = parse_peers(peers_input)
     yahoo_tickers = parse_yahoo_overrides(yahoo_overrides_input)
 
@@ -172,16 +173,28 @@ def run_and_display():
 
     def progress_cb(msg):
         status.update(label=msg)
+        print(f"[PROGRESS] {msg}", file=_sys.stderr, flush=True)
 
     t0 = time.time()
-    result = orch.run_research(
-        primary=primary_input.strip(),
-        peers=peers,
-        years=years,
-        yahoo_tickers=yahoo_tickers,
-        progress_callback=progress_cb,
-        use_cache=use_cache,
-    )
+    print(f"[RUN] Starting research for '{primary_input.strip()}'", file=_sys.stderr, flush=True)
+
+    try:
+        result = orch.run_research(
+            primary=primary_input.strip(),
+            peers=peers,
+            years=years,
+            yahoo_tickers=yahoo_tickers,
+            progress_callback=progress_cb,
+            use_cache=False,  # Force no cache until fetching is confirmed working
+        )
+    except Exception as e:
+        print(f"[RUN] EXCEPTION: {e}", file=_sys.stderr, flush=True)
+        st.error(f"Research failed: {e}")
+        return
+
+    duration = round(time.time() - t0, 1)
+    p = result.get("primary", {})
+    print(f"[RUN] Done in {duration}s. SEC={bool(p.get('sec'))}, Yahoo={bool(p.get('yahoo'))}, Gaps={p.get('data_gaps')}", file=_sys.stderr, flush=True)
     duration = round(time.time() - t0, 1)
 
     status.update(label="Normalizing data...")
