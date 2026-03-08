@@ -84,7 +84,7 @@ STAGGER_DELAY = 0.5  # Seconds between launching each company thread
 # Cache settings
 CACHE_DIR = os.path.join(_script_dir, ".research_cache")
 CACHE_TTL_HOURS = 24  # Cache entries expire after this many hours
-CACHE_VERSION = "v3"  # Bump when scraper logic changes to invalidate old cache
+CACHE_VERSION = "v4"  # Bump when scraper logic changes to invalidate old cache
 
 
 # ─── Cache ───────────────────────────────────────────────────────────────────
