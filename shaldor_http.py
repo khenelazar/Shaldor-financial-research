@@ -205,5 +205,8 @@ def patch_scrapers():
     sec_scraper.download_file = sec_download_file
     sec_scraper._rate_limit = _rate_limit
 
+    # Reset ticker cache so it reloads with the new fetch function
+    sec_scraper._ticker_cache = None
+
     maya_scraper.fetch = maya_fetch
     maya_scraper.download_file = maya_download_file
