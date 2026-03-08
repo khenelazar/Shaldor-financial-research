@@ -613,14 +613,12 @@ def run_research(
 
     results_map = {}
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_query = {}
-        for i, q in enumerate(all_queries):
-            # Stagger submissions to avoid SEC rate limit collisions
-            if i > 0:
-                time.sleep(STAGGER_DELAY)
-            future = executor.submit(
-                research_company,
+    # Run sequentially — more reliable on cloud platforms (Streamlit Cloud)
+    # Threading can be re-enabled for local use if needed
+    for i, q in enumerate(all_queries):
+        _progress(f"  Researching {q}...")
+        try:
+            company_result = research_company(
                 query=q,
                 years=years,
                 yahoo_ticker_override=yahoo_tickers.get(q),
@@ -628,25 +626,19 @@ def run_research(
                 progress_callback=progress_callback,
                 cache_ttl=cache_ttl,
             )
-            future_to_query[future] = q
-
-        for future in as_completed(future_to_query):
-            q = future_to_query[future]
-            try:
-                company_result = future.result()
-                results_map[q] = company_result
-                name = company_result.get("company_name") or q
-                gaps = len(company_result.get("data_gaps", []))
-                _progress(f"  ✓ {name} ({company_result['exchange']}, {gaps} gaps)")
-            except Exception as e:
-                _progress(f"  ✗ {q}: {e}")
-                results_map[q] = {
-                    "query": q, "exchange": None, "exchange_confidence": "error",
-                    "company_name": q,
-                    "sec": None, "maya": None, "yahoo": None,
-                    "data_gaps": [f"Fatal error: {e}"], "errors": [str(e)],
-                    "timings": {}, "resolved": {},
-                }
+            results_map[q] = company_result
+            name = company_result.get("company_name") or q
+            gaps = len(company_result.get("data_gaps", []))
+            _progress(f"  ✓ {name} ({company_result['exchange']}, {gaps} gaps)")
+        except Exception as e:
+            _progress(f"  ✗ {q}: {e}")
+            results_map[q] = {
+                "query": q, "exchange": None, "exchange_confidence": "error",
+                "company_name": q,
+                "sec": None, "maya": None, "yahoo": None,
+                "data_gaps": [f"Fatal error: {e}"], "errors": [str(e)],
+                "timings": {}, "resolved": {},
+            }
 
     primary_data = results_map.get(primary, results_map.get(all_queries[0]))
     peers_data = [results_map[p] for p in peers if p in results_map]
