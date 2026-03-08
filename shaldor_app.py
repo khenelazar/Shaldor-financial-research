@@ -29,6 +29,13 @@ _script_dir = os.path.dirname(os.path.abspath(__file__))
 if _script_dir not in sys.path:
     sys.path.insert(0, _script_dir)
 
+# CRITICAL: Patch scrapers to use requests instead of curl BEFORE importing orchestrator
+# This ensures all fetch functions use requests from the very first call
+import sec_scraper
+import maya_scraper
+import shaldor_http
+shaldor_http.patch_scrapers()
+
 import shaldor_research_orchestrator as orch
 from shaldor_normalizer import (
     normalize_company, build_peer_table, fmt_pct, fmt_millions, fmt_ratio,
