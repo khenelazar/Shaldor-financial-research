@@ -70,7 +70,9 @@ def sec_fetch(url: str) -> Optional[dict]:
     for attempt in range(MAX_RETRIES):
         try:
             _rate_limit()
+            print(f"  [HTTP] GET {url[:80]}...", file=sys.stderr, flush=True)
             resp = _requests.get(url, headers=SEC_HEADERS, timeout=20)
+            print(f"  [HTTP] Status: {resp.status_code}", file=sys.stderr, flush=True)
 
             if resp.status_code == 429 or resp.status_code >= 500:
                 last_error = f"HTTP {resp.status_code}"
@@ -198,6 +200,7 @@ def patch_scrapers():
     Replace curl-based fetch/download functions in sec_scraper and maya_scraper
     with requests-based versions. Call this before using the scrapers.
     """
+    import sys
     import sec_scraper
     import maya_scraper
 
@@ -210,3 +213,7 @@ def patch_scrapers():
 
     maya_scraper.fetch = maya_fetch
     maya_scraper.download_file = maya_download_file
+
+    print("[PATCH] Scrapers patched to use requests instead of curl", file=sys.stderr, flush=True)
+    print(f"[PATCH] sec_scraper.fetch = {sec_scraper.fetch.__name__}", file=sys.stderr, flush=True)
+    print(f"[PATCH] maya_scraper.fetch = {maya_scraper.fetch.__name__}", file=sys.stderr, flush=True)
