@@ -634,6 +634,9 @@ if not primary_input.strip():
 
 elif run_button or "result" in st.session_state:
     if run_button:
+        # Clear any stale results before running fresh
+        for key in ["result", "primary_norm", "peers_norm", "all_norm", "peer_table", "duration"]:
+            st.session_state.pop(key, None)
         run_and_display()
 
     if "primary_norm" in st.session_state:

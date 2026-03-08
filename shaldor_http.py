@@ -195,11 +195,18 @@ def maya_download_file(url: str, dest_path: str):
 
 # ─── Monkey-patch function ───────────────────────────────────────────────────
 
+_patched = False
+
 def patch_scrapers():
     """
     Replace curl-based fetch/download functions in sec_scraper and maya_scraper
     with requests-based versions. Call this before using the scrapers.
+    Only patches once — safe to call multiple times.
     """
+    global _patched
+    if _patched:
+        return
+
     import sys
     import sec_scraper
     import maya_scraper
@@ -208,12 +215,12 @@ def patch_scrapers():
     sec_scraper.download_file = sec_download_file
     sec_scraper._rate_limit = _rate_limit
 
-    # Reset ticker cache so it reloads with the new fetch function
-    sec_scraper._ticker_cache = None
+    # Reset ticker cache if it was loaded empty by curl before patch
+    if sec_scraper._ticker_cache is not None and len(sec_scraper._ticker_cache) == 0:
+        sec_scraper._ticker_cache = None
 
     maya_scraper.fetch = maya_fetch
     maya_scraper.download_file = maya_download_file
 
+    _patched = True
     print("[PATCH] Scrapers patched to use requests instead of curl", file=sys.stderr, flush=True)
-    print(f"[PATCH] sec_scraper.fetch = {sec_scraper.fetch.__name__}", file=sys.stderr, flush=True)
-    print(f"[PATCH] maya_scraper.fetch = {maya_scraper.fetch.__name__}", file=sys.stderr, flush=True)
